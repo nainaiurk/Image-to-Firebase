@@ -1,7 +1,8 @@
-// ignore_for_file: camel_case_types, prefer_const_constructors
+// ignore_for_file: camel_case_types, prefer_const_constructors, file_names
 
 
 import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -15,11 +16,12 @@ class Image_picker extends StatefulWidget {
 }
 
 class _Image_pickerState extends State<Image_picker> {
-  var mobileImage;
   var pimage;
+  var image;
+  FirebaseStorage storage = FirebaseStorage.instance;
   Future getImage() async{
     ImagePicker _picked = ImagePicker();
-    var image = await _picked.pickImage(
+    image = await _picked.pickImage(
       source: ImageSource.gallery,
       maxHeight: 500
     );
@@ -55,6 +57,20 @@ class _Image_pickerState extends State<Image_picker> {
         );
       });
     }
+    
+  }
+
+  Future uploadImage() async {
+    var file = File(image!.path);
+    if (image != null){
+        //Upload to Firebase
+        var snapshot = await storage.ref('files/')
+        .child('image')
+        .putFile(file);
+      } 
+      else {
+        print('No Image Path Received');
+      }
   }
 
   @override
@@ -75,7 +91,9 @@ class _Image_pickerState extends State<Image_picker> {
               icon: const Icon(Icons.camera)
             ),
             ElevatedButton(
-              onPressed: (){}, 
+              onPressed: (){
+                uploadImage();
+              }, 
               child: const Text('Submit')
             )
           ],
