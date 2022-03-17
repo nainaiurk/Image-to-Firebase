@@ -1,11 +1,10 @@
-// ignore_for_file: camel_case_types
+// ignore_for_file: camel_case_types, prefer_const_constructors
 
 
 import 'dart:io';
-import 'dart:ui';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 
 class Image_picker extends StatefulWidget {
@@ -16,16 +15,46 @@ class Image_picker extends StatefulWidget {
 }
 
 class _Image_pickerState extends State<Image_picker> {
+  var mobileImage;
   var pimage;
   Future getImage() async{
-    final ImagePicker _picked = ImagePicker();
-    final XFile? image = await _picked.pickImage(
+    ImagePicker _picked = ImagePicker();
+    var image = await _picked.pickImage(
       source: ImageSource.gallery,
       maxHeight: 500
     );
-    setState(() {
-      pimage = kIsWeb? Image.network(image!.path):Image.file(File(image!.path));
-    });
+    if (kIsWeb){
+      setState(() {
+        pimage = Image.network(image!.path);
+      });
+    }
+    else{
+      File? croppedFile = await ImageCropper().cropImage(
+        sourcePath: image!.path,
+        aspectRatioPresets: [
+          CropAspectRatioPreset.square,
+          CropAspectRatioPreset.ratio3x2,
+          CropAspectRatioPreset.original,
+          CropAspectRatioPreset.ratio4x3,
+          CropAspectRatioPreset.ratio16x9
+        ],
+        androidUiSettings: AndroidUiSettings(
+            toolbarTitle: 'Cropper',
+            toolbarColor: Colors.deepOrange,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false
+          ),
+        // iosUiSettings: IOSUiSettings(
+        //   minimumAspectRatio: 1.0,
+        // )
+      );
+      setState(() {
+        pimage = Image.file(
+          File(croppedFile!.path,)
+        );
+      });
+    }
   }
 
   @override
@@ -37,7 +66,7 @@ class _Image_pickerState extends State<Image_picker> {
           children:  [
             Container(
               height: 500,
-              child: pimage == null? Text('data'): pimage,
+              child: pimage,
             ),
             IconButton(
               onPressed: (){
